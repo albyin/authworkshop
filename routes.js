@@ -11,6 +11,7 @@ router.get('/signup', function (req, res) {
 });
 
 router.post('/signup', function (req, res, next) {
+
 	User.create(req.body, function (err, user) {
 		if (err) next(err);
 		else res.redirect('/success');
@@ -22,9 +23,9 @@ router.get('/login', function (req, res) {
 });
 
 router.post('/login', function (req, res, next) {
-	User.findOne(req.body, function (err, user) {
+	User.findOne({username:req.body.username}, function (err, userObj) {
 		if (err) next(err);
-		else if (!user) res.redirect('/failure');
+		else if (!userObj.authenticate(req.body.password)) res.redirect('/failure');
 		else res.redirect('/success');
 	});
 });

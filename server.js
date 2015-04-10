@@ -1,7 +1,16 @@
 var express = require('express'),
 	logger = require('morgan'),
 	bodyParser = require('body-parser'),
-	swig = require('swig');
+	swig = require('swig'),
+	https = require("https"),
+	fs = require("fs");
+
+var options = {
+	key: fs.readFileSync("./key.pem").toString(),
+	cert: fs.readFileSync("./cert.pem").toString()
+};
+
+console.log(options);
 
 var app = express();
 
@@ -30,6 +39,10 @@ app.use(function (err, req, res, next) {
 });
 
 var port = 1337;
+// https.createServer(options, app).listen(port, function () {
+// 	console.log('Listening now on port', port);
+// });
+
 app.listen(port, function () {
 	console.log('Listening now on port', port);
 });
