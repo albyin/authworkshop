@@ -1,25 +1,32 @@
-var mongoose = require('mongoose');
-var crypto = require("crypto");
-mongoose.connect('mongodb://localhost/authworkshop');
+var mongoose = require('mongoose'),
+	crypto = require('crypto');
+mongoose.connect('mongodb://localhost/auth');
 mongoose.connection.on('error', console.error.bind(console, 'database connection error'));
 
 var userSchema = new mongoose.Schema({
 	username: String,
 	hashedPassword: String,
-	salt: String
+	salt: {
+		type: String,
+		default: makeSalt
+	}
 });
 
-userSchema.methods.authenticate = function (password){
-	var testPassword = crypto.pbkdf2Sync(password, this.salt, 0, 64).toString('base64');
+function makeSalt () {
+	return crypto.randomBytes(16).toString('base64');
+}
 
-	return (this.hashedPassword === testPassword);
+userSchema.virtual('password')
+.set(function (plaintext) {
+	this.hashedPassword = this.hash(plaintext);
+});
+
+userSchema.methods.hash = function (plaintext) {
+	return crypto.pbkdf2Sync(plaintext, this.salt, 10000, 64).toString('base64');
 };
 
-userSchema.virtual("password").set(function (plaintext){
-	var saltBuffer = crypto.randomBytes(16);
-    this.salt = saltBuffer.toString('base64');
-
-	this.hashedPassword = crypto.pbkdf2Sync(plaintext, this.salt, 0, 64).toString('base64');
-});
+userSchema.methods.authenticate = function (attempt) {
+	return this.hash(attempt) == this.hashedPassword;
+};
 
 module.exports = mongoose.model('User', userSchema);
